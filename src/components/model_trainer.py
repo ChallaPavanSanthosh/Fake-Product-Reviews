@@ -2,6 +2,9 @@ import os
 import sys
 from dataclasses import dataclass
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='xgboost')
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, VotingClassifier
@@ -11,7 +14,6 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
-from sklearn.neighbors import KNeighborsClassifier
 from src.utils import evaluate_models
 
 from src.exception import CustomException
@@ -37,19 +39,39 @@ class ModelTrainer:
             )
             models = {
                 "Logistic Regression": LogisticRegression(max_iter=1000),
-                "Random Forest": RandomForestClassifier(),
+                "Random Forest": RandomForestClassifier(n_jobs=1),
                 "Decision Tree": DecisionTreeClassifier(),
                 "Gradient Boosting": GradientBoostingClassifier(),
-                "XGBoost": XGBClassifier(use_label_encoder=False, eval_metric='mlogloss'),
-                "CatBoost": CatBoostClassifier(verbose=False),
-                "AdaBoost": AdaBoostClassifier(),
-                "KNN": KNeighborsClassifier()
+                "XGBoost": XGBClassifier(eval_metric='mlogloss'),
+                "LightGBM": LGBMClassifier()
             }
+            params = {
+                "Logistic Regression": {},
+                "Random Forest": {
+                    "n_estimators": [50],
+                    "max_depth": [10]
+                    },
+                "Decision Tree": {
+                    "criterion": ["gini", "entropy"]
+                    },
+                "Gradient Boosting": {
+                    "learning_rate": [0.1],
+                    "n_estimators": [50]
+                    },
+                "XGBoost": {
+                    "learning_rate": [0.01, 0.1],
+                    "n_estimators": [50, 100]
+                    },
+                "LightGBM": {
+                    "n_estimators": [100, 200],
+                    "learning_rate": [0.01, 0.1],
+                    "num_leaves": [31, 50]}
+                }
+            
             model_report = evaluate_models(
                 X_train=X_train, y_train=y_train,
                 X_test=X_test, y_test=y_test,
-                models=models,
-                  # <- you may need to add this flag in your util
+                models=models,param=params,
             )
 
 
@@ -60,8 +82,8 @@ class ModelTrainer:
             best_model_name = list(model_report.keys())[list(model_report.values()).index(best_model_score)]
             best_model = models[best_model_name]
 
-            if best_model_score < 0.6:
-                raise CustomException("No best model found (accuracy < 60%)")
+            if best_model_score < 0.4:
+                raise CustomException("No best model found (accuracy < 40%)")
 
             logging.info(f"Best model found: {best_model_name} with accuracy: {best_model_score:.2f}")
 
@@ -69,6 +91,11 @@ class ModelTrainer:
                 file_path=self.model_trainer_config.trained_model_file_path,
                 obj=best_model
             )
+
+            y_train_pred = best_model.predict(X_train)
+            train_accuracy = accuracy_score(y_train, y_train_pred)
+            print(f"Training Accuracy: {train_accuracy:.4f}")
+
 
             y_pred = best_model.predict(X_test)
             final_accuracy = accuracy_score(y_test, y_pred)

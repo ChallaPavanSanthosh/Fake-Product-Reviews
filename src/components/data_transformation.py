@@ -10,6 +10,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder,StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import FunctionTransformer
+from sklearn.preprocessing import LabelEncoder
 
 from src.exception import CustomException
 from src.logger import logging
@@ -46,7 +47,7 @@ class DataTransformation:
 
             text_pipeline = Pipeline(steps=[
                 ("selector", FunctionTransformer(lambda x: x["text_"], validate=False)),
-                ("tfidf", TfidfVectorizer(max_features=5000, stop_words="english"))
+                ("tfidf", TfidfVectorizer(max_features=1000, stop_words="english"))
             ])
 
             logging.info(f"Numerical columns: {numerical_columns}")
@@ -84,6 +85,10 @@ class DataTransformation:
 
             input_feature_test_df = test_df.drop(columns=[target_column_name])
             target_feature_test_df = test_df[target_column_name]
+
+            label_encoder = LabelEncoder()
+            target_feature_train_df = label_encoder.fit_transform(target_feature_train_df)
+            target_feature_test_df = label_encoder.transform(target_feature_test_df)
 
             logging.info("Applying preprocessing object on training and testing data")
 

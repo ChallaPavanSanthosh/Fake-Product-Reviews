@@ -29,7 +29,7 @@ def evaluate_models(X_train, y_train,X_test,y_test,models, param):
         
         for model_name, model in models.items():
             try:
-                print(f"\n⏳ Training model: {model_name}")
+                print(f"\nTraining model: {model_name}")
                 hyperparams = param.get(model_name, {})
 
                 # Turn OFF parallelism for stability

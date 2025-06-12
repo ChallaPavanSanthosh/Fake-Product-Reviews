@@ -5,6 +5,8 @@ import pandas as pd
 from src.exception import CustomException
 from src.utils import load_object
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message="X does not have valid feature names")
 class PredictPipeline:
     def __init__(self):
         pass
@@ -20,6 +22,7 @@ class PredictPipeline:
             print("Successfully loaded model and preprocessor")
 
             print("Transforming input features...")
+            
             data_scaled = preprocessor.transform(features)
 
             print("Predicting...")

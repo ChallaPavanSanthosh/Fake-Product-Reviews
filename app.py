@@ -22,6 +22,7 @@ def predict_review():
             'text_': [review_text]       # rename to match training feature
         })
 
+
         pipeline = PredictPipeline()
         prediction = pipeline.predict(data)
 

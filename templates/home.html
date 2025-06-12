@@ -1,23 +1,109 @@
-<html>
-  <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
     <title>Fake Product Review Detection</title>
-  </head>
-  <body>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0d1117;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #f0f6fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 500px;
+            background-color: #161b22;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.4);
+            text-align: center;
+        }
+
+        .scrolling-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #58a6ff;
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .scrolling-title span {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scrollText 12s linear infinite;
+        }
+
+        @keyframes scrollText {
+            0% {
+                transform: translateX(0%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        label {
+            font-weight: 500;
+            display: block;
+            margin: 20px 0 10px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            resize: vertical;
+        }
+
+        .btn {
+            margin-top: 20px;
+            background-color: #238636;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2ea043;
+        }
+
+        h2 {
+            margin-top: 30px;
+            font-size: 20px;
+            color: #58a6ff;
+        }
+    </style>
+</head>
+<body>
     <div class="container">
-      <h1>Fake Product Review Detector</h1>
-
-      <form action="{{ url_for('predict_review') }}" method="post">
-        <div class="mb-3">
-          <label class="form-label">Enter Product Review</label>
-          <textarea class="form-control" name="review_text" rows="6" placeholder="Type your review here..." required></textarea>
+        <div class="scrolling-title">
+            <span>Fake Product Review Detector &nbsp;&nbsp;&nbsp;&nbsp;</span>
         </div>
 
-        <div class="mb-3">
-          <input class="btn btn-primary" type="submit" value="Check if Fake" />
-        </div>
-      </form>
+        <form action="{{ url_for('predict_review') }}" method="post">
+            <label for="review_text">Enter Product Review</label>
+            <textarea id="review_text" name="review_text" rows="6" placeholder="Type your review here..." required></textarea>
+            <input class="btn" type="submit" value="Check if Real/Fake" />
+        </form>
 
-      <h2>Prediction: {{ results }}</h2>
+        {% if results %}
+            <h2>Prediction: {{ results }}</h2>
+        {% endif %}
     </div>
-  </body>
+</body>
 </html>

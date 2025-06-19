@@ -14,7 +14,6 @@ from sklearn.preprocessing import LabelEncoder
 
 from src.exception import CustomException
 from src.logger import logging
-
 from src.utils import save_object
 
 @dataclass
@@ -25,12 +24,18 @@ class DataTransformation:
     def __init__(self):
         self.data_transformation_config=DataTransformationConfig()
 
+    def add_manual_features(self, df):  
+        df["review_length"] = df["text_"].apply(len)
+        df["caps_count"] = df["text_"].apply(lambda x: sum(1 for c in x if c.isupper()))
+        df["exclaim_count"] = df["text_"].apply(lambda x: x.count("!"))
+        return df
+    #
     def get_data_transformer_object(self):
         '''
         This function is responisble for data transformation
         '''
         try:
-            numerical_columns = ["rating"]
+            numerical_columns = ["rating", "review_length", "caps_count", "exclaim_count"] #
             categorical_columns = ["category"]
             text_column = "text_"
 
@@ -47,7 +52,9 @@ class DataTransformation:
 
             text_pipeline = Pipeline(steps=[
                 ("selector", FunctionTransformer(lambda x: x["text_"], validate=False)),
-                ("tfidf", TfidfVectorizer(max_features=1000, stop_words="english"))
+                # ("tfidf", TfidfVectorizer(max_features=1000, stop_words="english"))
+                ("tfidf", TfidfVectorizer(max_features=3000, ngram_range=(1, 2), stop_words="english"))
+
             ])
 
             logging.info(f"Numerical columns: {numerical_columns}")
@@ -74,6 +81,13 @@ class DataTransformation:
             test_df = pd.read_csv(test_path)
 
             logging.info("Read train and test data completed")
+
+            # Add manual features
+            train_df = self.add_manual_features(train_df) #
+            test_df = self.add_manual_features(test_df) #
+
+            logging.info("Manual features added") #
+
             logging.info("Obtaining preprocessing object")
 
             preprocessing_obj = self.get_data_transformer_object()
@@ -89,6 +103,10 @@ class DataTransformation:
             label_encoder = LabelEncoder()
             target_feature_train_df = label_encoder.fit_transform(target_feature_train_df)
             target_feature_test_df = label_encoder.transform(target_feature_test_df)
+
+            for index, class_label in enumerate(label_encoder.classes_):
+                logging.info(f"Label encoding: {class_label} --> {index}")
+
 
             logging.info("Applying preprocessing object on training and testing data")
 

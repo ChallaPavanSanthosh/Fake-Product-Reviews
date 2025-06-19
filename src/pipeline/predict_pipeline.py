@@ -11,6 +11,13 @@ class PredictPipeline:
     def __init__(self):
         pass
 
+    def add_manual_features(self, df):
+        df["review_length"] = df["text_"].apply(len)
+        df["caps_count"] = df["text_"].apply(lambda x: sum(1 for c in x if c.isupper()))
+        df["exclaim_count"] = df["text_"].apply(lambda x: x.count("!"))
+        return df
+
+
     def predict(self, features: pd.DataFrame):
         try:
             model_path = os.path.join("artifacts", "model.pkl")
@@ -21,8 +28,11 @@ class PredictPipeline:
             preprocessor = load_object(file_path=preprocessor_path)
             print("Successfully loaded model and preprocessor")
 
+            print("Adding manual features...")
+            features = self.add_manual_features(features)
+
+
             print("Transforming input features...")
-            
             data_scaled = preprocessor.transform(features)
 
             print("Predicting...")

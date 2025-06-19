@@ -2,6 +2,7 @@ import os
 import sys
 from dataclasses import dataclass
 
+import pandas as pd
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='xgboost')
 warnings.filterwarnings("ignore", category=UserWarning, module='LightGBM')
@@ -10,12 +11,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, VotingClassifier
 from sklearn.svm import SVC
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve, confusion_matrix, classification_report
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
 from src.utils import evaluate_models
+from imblearn.over_sampling import SMOTE
 
 from src.exception import CustomException
 from src.logger import logging
@@ -38,6 +41,13 @@ class ModelTrainer:
                 test_array[:,:-1],
                 test_array[:,-1]
             )
+
+            smote = SMOTE(random_state=42)
+            X_train, y_train = smote.fit_resample(X_train, y_train)
+
+            logging.info(f"After SMOTE, training label distribution: {dict(pd.Series(y_train).value_counts())}")
+
+
             models = {
                 "Logistic Regression": LogisticRegression(max_iter=1000),
                 "Random Forest": RandomForestClassifier(n_jobs=1),
@@ -53,7 +63,7 @@ class ModelTrainer:
                     "max_depth": [10]
                     },
                 "Decision Tree": {
-                    "criterion": ["gini", "entropy"]
+                    "criterion": ["gini"]
                     },
                 "Gradient Boosting": {
                     "learning_rate": [0.1],
@@ -86,10 +96,30 @@ class ModelTrainer:
             best_model.fit(X_train, y_train)
 
 
-            if best_model_score < 0.4:
-                raise CustomException("No best model found (accuracy < 40%)")
+            # if best_model_score < 0.7:
+            #    raise CustomException("No best model found (accuracy < 40%)")
+            
+            # Evaluate additional metrics before saving
 
-            logging.info(f"Best model found: {best_model_name} with accuracy: {best_model_score:.2f}")
+            y_pred = best_model.predict(X_test)
+
+            f1 = f1_score(y_test, y_pred, average='weighted')
+            try:
+                auc = roc_auc_score(y_test, best_model.predict_proba(X_test)[:, 1])
+            except Exception as e:
+                logging.warning(f"AUC score could not be calculated: {e}")
+                auc = 0.0
+
+            if best_model_score < 0.7 or f1 < 0.65 or auc < 0.7:
+                raise CustomException(f"No suitable model found. Conditions not met - Accuracy: {best_model_score:.2f}, F1 Score: {f1:.2f}, AUC: {auc:.2f}")
+            
+
+
+            logging.info(f"Best model found: {best_model_name}")
+            logging.info(f"Accuracy: {best_model_score:.2f}, F1 Score: {f1:.2f}, AUC: {auc:.2f}")
+
+
+            # logging.info(f"Best model found: {best_model_name} with accuracy: {best_model_score:.2f}")
 
             save_object(
                 file_path=self.model_trainer_config.trained_model_file_path,

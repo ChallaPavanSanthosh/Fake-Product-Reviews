@@ -22,7 +22,4 @@ author='Pavan_Santhosh',
 author_email='chvspsanthosh@gmail.com',
 packages=find_packages(),
 install_requires=get_requirements('requirements.txt')
-
-
-
 )

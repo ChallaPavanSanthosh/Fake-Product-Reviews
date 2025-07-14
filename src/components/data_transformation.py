@@ -29,7 +29,7 @@ class DataTransformation:
         df["caps_count"] = df["text_"].apply(lambda x: sum(1 for c in x if c.isupper()))
         df["exclaim_count"] = df["text_"].apply(lambda x: x.count("!"))
         return df
-    #
+    
     def get_data_transformer_object(self):
         '''
         This function is responisble for data transformation
@@ -52,7 +52,6 @@ class DataTransformation:
 
             text_pipeline = Pipeline(steps=[
                 ("selector", FunctionTransformer(lambda x: x["text_"], validate=False)),
-                # ("tfidf", TfidfVectorizer(max_features=1000, stop_words="english"))
                 ("tfidf", TfidfVectorizer(max_features=3000, ngram_range=(1, 2), stop_words="english"))
 
             ])
@@ -83,10 +82,10 @@ class DataTransformation:
             logging.info("Read train and test data completed")
 
             # Add manual features
-            train_df = self.add_manual_features(train_df) #
-            test_df = self.add_manual_features(test_df) #
+            train_df = self.add_manual_features(train_df) 
+            test_df = self.add_manual_features(test_df) 
 
-            logging.info("Manual features added") #
+            logging.info("Manual features added") 
 
             logging.info("Obtaining preprocessing object")
 
@@ -122,9 +121,6 @@ class DataTransformation:
 
             print("input_feature_train_arr shape:", input_feature_train_arr.shape)
             print("target_feature_train_df shape:", np.array(target_feature_train_df).shape)
-
-            # target_feature_train_df = target_feature_train_df.values.reshape(-1, 1)
-            # target_feature_test_df = target_feature_test_df.values.reshape(-1, 1)
 
             target_feature_train_df = np.array(target_feature_train_df).reshape(-1, 1)
             target_feature_test_df = np.array(target_feature_test_df).reshape(-1, 1)
